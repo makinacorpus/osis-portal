@@ -92,6 +92,9 @@ msgstr ""
 msgid "Display teachers"
 msgstr ""
 
+msgid "Download the list (Excel or PDF)"
+msgstr ""
+
 msgid "ECT"
 msgstr ""
 
@@ -165,6 +168,9 @@ msgstr ""
 msgid "Legend to help you understanding the xls file"
 msgstr ""
 
+msgid "List code"
+msgstr ""
+
 msgid "List of students enrolled to exams of "
 msgstr ""
 
@@ -174,7 +180,7 @@ msgstr ""
 msgid "Lists of students enrollments to exams"
 msgstr ""
 
-msgid "My application"
+msgid "'Lists of students enrolled to my exams' are immediately usable for encoding scores."
 msgstr ""
 
 msgid "My applications"
@@ -300,6 +306,9 @@ msgid "Teaching charge"
 msgstr ""
 
 msgid "The Excel lists for encoding scores are available in"
+msgstr ""
+
+msgid "The lists of students enrolled to courses are available in "
 msgstr ""
 
 #, python-format

@@ -32,7 +32,7 @@ from typing import List
 from django.conf import settings
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
@@ -43,10 +43,29 @@ from base.forms.base_forms import GlobalIdForm
 from base.models.learning_unit_year import LearningUnitYear
 from base.models.person import Person
 from base.views import layout
+import requests
+from continuing_education.views.api import get_personal_token
+import io
+
+import requests
+from django.conf import settings
+from django.http import Http404
+from rest_framework import status
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.parsers import JSONParser
+from continuing_education.views.api import transform_response_to_data
+import base64
+from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer, BaseRenderer
+from django.urls import reverse
+from django.contrib import messages
 
 NO_DATA_VALUE = "-"
 LEARNING_UNIT_ACRONYM_ID = "learning_unit_acronym_"
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
+REQUEST_HEADER = {'Authorization': 'Token ' + settings.OSIS_PORTAL_TOKEN}
+API_URL = settings.URL_CONTINUING_EDUCATION_FILE_API
+API_OBJECT_URL = API_URL + "%(object_name)s/%(object_uuid)s"
 
 
 @login_required
@@ -117,16 +136,21 @@ def get_anac_parameter(current_academic_year):
 @permission_required('base.can_access_attribution', raise_exception=True)
 @require_POST
 def list_build(request):
+    xls_type = request.POST.get('hdn_xls')
+    list_learning_unit_id = request.POST.get('hdn_xls_learning_unit_id')
+    print(list_learning_unit_id)
+
     current_academic_year = mdl_base.academic_year.current_academic_year()
     anac = get_anac_parameter(current_academic_year)
     codes = get_codes_parameter(request, current_academic_year)
-    list_exam_enrollments_xls = fetch_student_exam_enrollment(str(anac), codes)
-    if list_exam_enrollments_xls:
-        return _make_xls_list(list_exam_enrollments_xls)
-    else:
-        data = get_learning_units(request.user)
-        data.update({'msg_error': _('No data found')})
-        return render(request, "list/students_exam.html", data)
+    if xls_type == "score_encoding_xls":
+        luy = LearningUnitYear.objects.get(pk=list_learning_unit_id)
+        response = get_data_from_osis(request, luy, anac)
+        # r = get_data_from_osis(request, custom_path="xlsdownload2/1699999999999999999999999999999999953111112")
+        if isinstance(response, str):
+            return HttpResponseRedirect(response)
+        else:
+            return response
 
 
 def fetch_student_exam_enrollment(academic_year, codes):
@@ -218,3 +242,42 @@ def get_codes_parameter_list(request, academic_yr, data):
     if learning_unit_years:
         return learning_unit_years
     return NO_DATA_VALUE
+
+
+@renderer_classes((BaseRenderer,))
+def get_data_from_osis(request, luy, anac):
+    list_learning_unit_id = luy.pk
+    list_learning_unit_id = 559966
+
+    token = get_personal_token(request)
+    url = "http://localhost:8002/api/v1/base/xlsdownload2/{}/{}".format(token, list_learning_unit_id)
+
+    response = requests.get(
+        url=url,
+        headers={'Authorization': 'Token ' + token} if request.user.is_authenticated
+        else REQUEST_HEADER
+    )
+    print(response.status_code)
+    url_when_error_occured = reverse('students_list')
+
+    if response.status_code == status.HTTP_404_NOT_FOUND:
+        print('if a {}'.format(token))
+        raise Http404
+    elif response.status_code == 309:
+        messages.add_message(request, messages.INFO, _("Impossible to create xls learning unit doesn't exists"), "alert-info")
+        return url_when_error_occured
+    elif response.status_code == status.HTTP_403_FORBIDDEN:
+        raise PermissionDenied(response.json()['detail'] if response.content else '')
+    elif response.status_code != 200:
+        messages.add_message(request, messages.INFO, _("Error occured while creating xls list"),
+                             "alert-info")
+        return url_when_error_occured
+
+    filename = "test.xlsx"
+    number_session = "comment_l_avoir"
+    filename = "session_%s_%s_%s.xlsx" % (str(luy.academic_year.year), number_session, luy.acronym)
+
+    response = HttpResponse(response,
+                            content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = 'attachment; filename=%s' % filename
+    return response

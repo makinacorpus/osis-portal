@@ -94,6 +94,9 @@ msgstr "Détails autre aménagement"
 msgid "Display teachers"
 msgstr "Afficher les enseignants"
 
+msgid "Download the list (Excel or PDF)"
+msgstr "Télécharger la liste (PDF ou Excel)"
+
 msgid "ECT"
 msgstr "ECT"
 
@@ -166,6 +169,9 @@ msgstr "Le vol.1 postulé ou le vol.2 postulé doit être rempli"
 msgid "Legend to help you understanding the xls file"
 msgstr "Légende pour mieux comprendre le fichier xls"
 
+msgid "List code"
+msgstr "Code liste"
+
 msgid "List of students enrolled to exams of "
 msgstr "Listes des étudiants inscrits aux examens de "
 
@@ -174,6 +180,9 @@ msgstr "Listes des étudiants inscrits à mes examens"
 
 msgid "Lists of students enrollments to exams"
 msgstr "Administration des listes des inscriptions des étudiants aux examens"
+
+msgid "'Lists of students enrolled to my exams' are immediately usable for encoding scores."
+msgstr "Les 'Listes des étudiants inscrits à mes examens' sont immédiatement utilisables pour l'encodage des notes."
 
 msgid "My application"
 msgstr "Ma candidature"
@@ -307,6 +316,9 @@ msgstr "Charge d'enseignement"
 msgid "The Excel lists for encoding scores are available in"
 msgstr ""
 "Les listes Excel destinées à l'encodage des notes sont disponibles dans"
+
+msgid "The lists of students enrolled to courses are available in "
+msgstr "Les listes des étudiants inscrits aux cours sont disponibles dans "
 
 #, python-format
 msgid ""
