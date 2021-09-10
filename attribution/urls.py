@@ -6,7 +6,7 @@
 #    The core business involves the administration of students, teachers,
 #    courses, programs and so on.
 #
-#    Copyright (C) 2015-2018 Université catholique de Louvain (http://www.uclouvain.be)
+#    Copyright (C) 2015-2021 Université catholique de Louvain (http://www.uclouvain.be)
 #
 #    This program is free software: you can redistribute it and/or modify
 #    it under the terms of the GNU General Public License as published by
@@ -98,5 +98,5 @@ urlpatterns = [
         ])),
     ])),
     url(r'^list/students$', list.students_list, name='students_list'),
-    url(r'^list/students/xls', list.list_build, name='students_list_create'),
+    url(r'^list/students/xls/(?P<learning_unit_year_id>[0-9]+)/', list.list_build, name='students_list_create'),
 ]

@@ -49,6 +49,8 @@ from base.utils import queue_utils
 from base.views import layout
 from osis_common.decorators.ajax import ajax_required
 from osis_common.document import paper_sheet
+from base.utils.api_utils import get_data_from_osis
+from base.models.learning_unit_year import LearningUnitYear
 
 logger = logging.getLogger(settings.DEFAULT_LOGGER)
 queue_exception_logger = logging.getLogger(settings.QUEUE_EXCEPTION_LOGGER)
@@ -94,9 +96,7 @@ def scores_sheets(request):
 
 
 @login_required
-@permission_required('base.is_tutor', raise_exception=True)
 @require_GET
-@ajax_required
 def ask_papersheet(request, global_id):
     if 'assessments' in settings.INSTALLED_APPS:
         person = mdl_base.person.find_by_global_id(global_id)
@@ -278,3 +278,14 @@ def _check_person_and_scores_in_db(person):
         scores_in_db_and_uptodate = False
         logger.warning("This person doesn't exist")
     return scores_in_db_and_uptodate
+
+
+@login_required
+@permission_required('base.is_tutor', raise_exception=True)
+def download_papersheet_with_api(request, learning_unit_id=None):
+    luy = LearningUnitYear.objects.get(pk=learning_unit_id)
+    response = get_data_from_osis(request, luy, 'papersheetapidownload', 'pdf')
+    if isinstance(response, str):
+        return HttpResponseRedirect(response)
+    else:
+        return response

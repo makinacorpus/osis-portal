@@ -23,26 +23,38 @@
 #    see http://www.gnu.org/licenses/.
 #
 ##############################################################################
+import base64
 import functools
+import io
 import logging
 import operator
+import requests
 import urllib
-from typing import List
-
 from django.conf import settings
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required, permission_required
 from django.db.models import Q
-from django.http import HttpResponse
+from django.http import Http404
+from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.urls import reverse
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from rest_framework import status
+from rest_framework.decorators import api_view, renderer_classes
+from rest_framework.exceptions import PermissionDenied
+from rest_framework.parsers import JSONParser
+from rest_framework.renderers import JSONRenderer, TemplateHTMLRenderer, BaseRenderer
+from typing import List
 
 from attribution.services.attribution import AttributionService
 from base import models as mdl_base
 from base.forms.base_forms import GlobalIdForm
 from base.models.learning_unit_year import LearningUnitYear
 from base.models.person import Person
+from base.utils.api_utils import get_data_from_osis
 from base.views import layout
+from continuing_education.views.api import get_personal_token
 
 NO_DATA_VALUE = "-"
 LEARNING_UNIT_ACRONYM_ID = "learning_unit_acronym_"
@@ -115,18 +127,13 @@ def get_anac_parameter(current_academic_year):
 
 @login_required
 @permission_required('base.can_access_attribution', raise_exception=True)
-@require_POST
-def list_build(request):
-    current_academic_year = mdl_base.academic_year.current_academic_year()
-    anac = get_anac_parameter(current_academic_year)
-    codes = get_codes_parameter(request, current_academic_year)
-    list_exam_enrollments_xls = fetch_student_exam_enrollment(str(anac), codes)
-    if list_exam_enrollments_xls:
-        return _make_xls_list(list_exam_enrollments_xls)
+def list_build(request, learning_unit_year_id):
+    luy = LearningUnitYear.objects.get(pk=learning_unit_year_id)
+    response = get_data_from_osis(request, luy, 'xlsapidownload', 'xls')
+    if isinstance(response, str):
+        return HttpResponseRedirect(response)
     else:
-        data = get_learning_units(request.user)
-        data.update({'msg_error': _('No data found')})
-        return render(request, "list/students_exam.html", data)
+        return response
 
 
 def fetch_student_exam_enrollment(academic_year, codes):
